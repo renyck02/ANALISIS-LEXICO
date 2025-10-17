@@ -1,35 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="flex flex-col h-screen bg-gray-900 p-6 gap-4">
+      {/*<h1 className="flex justify-center text-2xl font-bold text-white mb-4">
+        Análisis Léxico
+      </h1>*/}
+      {/*Al chile nose como poner las fokin tablas w, ahi hice lo que pude*/}
+      <div className="grid grid-cols-1 lg:grid-cols-3 flex-1 gap-6">
+        <div className="bg-gray-700 rounded-lg p-5 shadow-lg lg:col-span-2 flex flex-col">
+          <h1 className="text-lg font-semibold text-white mb-3">
+            Editor de Código (Zona de Entrada)
+          </h1>
+          <textarea
+            className="flex-1 p-3 bg-slate-900 text-white rounded-lg  text-sm"
+            placeholder="Escribe tu código aquí..."
+          ></textarea>
+        </div>
+        <div className="bg-gray-700 rounded-lg p-5 shadow-lg flex flex-col overflow-y-auto">
+          <h1 className="text-lg font-semibold text-white mb-3">
+            Errores Léxicos
+          </h1>
+          <div className="text-sm text-slate-300 flex-1 space-y-2"></div>
+        </div>
+        <div className="bg-gray-700 rounded-lg p-5 shadow-lg flex flex-col overflow-y-auto">
+          <h1 className="text-lg font-semibold text-white mb-3">
+            Lexemas y Componentes
+          </h1>
+          <div className="text-sm text-slate-300 flex-1 space-y-1"></div>
+        </div>
+        <div className="bg-gray-700 rounded-lg p-5 shadow-lg flex flex-col overflow-y-auto lg:col-span-2">
+          <h1 className="text-lg font-semibold text-white mb-3">
+            Tabla de Símbolos
+          </h1>
+          <div className="text-sm text-slate-300 flex-1 overflow-auto"></div>
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+      <button className="bg-blue-700 text-white px-6 py-3 rounded-lg   font-medium">
+        Analizar Código
+      </button>
+    </div>
+  );
 }
 
-export default App
+export default App;
