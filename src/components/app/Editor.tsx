@@ -1,6 +1,5 @@
 import {Card, CardContent, CardDescription, CardTitle} from "@/components/ui/card.tsx";
 import {Textarea} from "@/components/ui/textarea.tsx";
-import { RippleButton } from "@/components/ui/ripple-button"
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button"
 type EditorProps = {
     code: string;
