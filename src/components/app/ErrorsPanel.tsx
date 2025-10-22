@@ -18,7 +18,7 @@ export function ErrorsPanel({ analyzed, errors }: ErrorsPanelProps) {
                 <CardTitle className="">Errores Léxicos</CardTitle>
             </CardHeader>
 
-            <CardContent className="p-1">
+            <CardContent>
                 <ScrollArea className="h-72 pr-2">
                     {!analyzed && (
                         <Alert className=" ">
@@ -39,7 +39,6 @@ export function ErrorsPanel({ analyzed, errors }: ErrorsPanelProps) {
                             </AlertDescription>
                         </Alert>
                     )}
-
 
                     {errors.map((e, idx) => (
                         <Alert
