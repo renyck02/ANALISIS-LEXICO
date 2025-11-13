@@ -19,7 +19,7 @@ export function ErrorsPanel({ analyzed, errors }: ErrorsPanelProps) {
             </CardHeader>
 
             <CardContent>
-                <ScrollArea className=" pr-1">
+                <ScrollArea className="h-72 pr-2">
                     {!analyzed && (
                         <Alert className=" ">
                             <Info className="h-4 w-4" />
