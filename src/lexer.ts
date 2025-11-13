@@ -1,9 +1,3 @@
-// Simple lexical analyzer for a small C-like language
-// - Recognizes: keywords, identifiers, numbers, strings, operators, delimiters, comments
-// - Tracks line/column positions
-// - Reports lexical errors
-// - Builds a basic symbol table of identifiers found
-
 export type TokenType =
   | "keyword"
   | "identifier"
@@ -16,8 +10,8 @@ export type TokenType =
 export interface Token {
   type: TokenType;
   lexeme: string;
-  line: number; // 1-based
-  column: number; // 1-based, column of first character
+  line: number;
+  column: number;
 }
 
 export interface LexError {
@@ -31,16 +25,18 @@ export interface SymbolInfo {
   count: number;
   firstLine: number;
   firstColumn: number;
+  type: string;
+  value: string;
 }
 
 export interface LexerResult {
   tokens: Token[];
   errors: LexError[];
-  symbols: SymbolInfo[]; // unique identifiers
+  symbols: SymbolInfo[];
 }
 
 const KEYWORDS = new Set([
-  // control flow
+  //
   "if",
   "else",
   "while",
@@ -48,16 +44,16 @@ const KEYWORDS = new Set([
   "return",
   "break",
   "continue",
-  // types
+  //
   "int",
   "float",
   "bool",
   "string",
   "void",
-  // boolean literals
+  //
   "true",
   "false",
-  // functions
+  //
   "function",
 ]);
 
@@ -158,7 +154,6 @@ export function lex(input: string): LexerResult {
     let ch = currentChar();
     if (ch === null) break;
 
-    // Skip whitespace
     if (/[\t\r\n\s]/.test(ch)) {
       advance();
       continue;
@@ -167,19 +162,13 @@ export function lex(input: string): LexerResult {
     const startLine = line;
     const startColumn = column;
 
-    // Comments or division operator
     if (ch === "/") {
       const next = peek();
       if (next === "/") {
-        // Line comment
-        // consume till end of line
         while (currentChar() !== null && currentChar() !== "\n") advance();
-        // Optionally record comment token
-        // addToken("comment", "//", startLine, startColumn);
         continue;
       } else if (next === "*") {
-        // Block comment
-        advance(2); // consume /*
+        advance(2);
         let terminated = false;
         while (i < length) {
           if (currentChar() === "*" && peek() === "/") {
@@ -194,7 +183,6 @@ export function lex(input: string): LexerResult {
         }
         continue;
       }
-      // Could be /= or single '/'
       const two = ch + (next ?? "");
       if (MULTI_OPERATORS.has(two)) {
         addToken("operator", two, startLine, startColumn);
@@ -206,9 +194,8 @@ export function lex(input: string): LexerResult {
       continue;
     }
 
-    // Strings: "..."
     if (ch === '"') {
-      advance(); // consume opening quote
+      advance();
       let value = "";
       let escaped = false;
       let strLine = startLine;
@@ -217,7 +204,7 @@ export function lex(input: string): LexerResult {
         const c = currentChar();
         if (c === null) break;
         if (!escaped && c === '"') {
-          advance(); // consume closing quote
+          advance();
           addToken("string", '"' + value + '"', strLine, strCol);
           escaped = false;
           value = "";
@@ -229,10 +216,8 @@ export function lex(input: string): LexerResult {
           continue;
         }
         if (escaped) {
-          // Accept common escapes
           const esc = c;
           if (!/["\\nrt0]/.test(esc)) {
-            // unknown escape, still accept but note? We'll just include it.
           }
           value += "\\" + esc;
           escaped = false;
@@ -241,20 +226,17 @@ export function lex(input: string): LexerResult {
           value += c;
           advance();
         }
-        // Newlines inside strings are allowed only if escaped via \n; if raw newline seen, it's an unterminated string
         if (!escaped && c === "\n") {
           addError("Cadena sin terminar", startLine, startColumn);
           break;
         }
       }
       if (escaped || (currentChar() === null && value !== "")) {
-        // EOF before closing quote
         addError("Cadena sin terminar", startLine, startColumn);
       }
       continue;
     }
 
-    // Numbers: int or float (e.g., 123, 45.67)
     if (isDigit(ch)) {
       let text = "";
       while (isDigit(currentChar())) {
@@ -269,16 +251,13 @@ export function lex(input: string): LexerResult {
           advance();
         }
       }
-      // If letter immediately after number (e.g., 123abc), that's a lexical error in many languages
       if (isAlpha(currentChar())) {
-        // capture the junk
         let junk = "";
         while (isAlphaNumeric(currentChar())) {
           junk += currentChar();
           advance();
         }
         addError(`Número inválido: '${text + junk}'`, startLine, startColumn);
-        // still add the numeric part as a token to continue parsing downstream
         addToken("number", text, startLine, startColumn);
       } else {
         addToken("number", text, startLine, startColumn);
@@ -286,7 +265,6 @@ export function lex(input: string): LexerResult {
       continue;
     }
 
-    // Identifiers/Keywords
     if (isAlpha(ch)) {
       let text = "";
       while (isAlphaNumeric(currentChar())) {
@@ -297,7 +275,6 @@ export function lex(input: string): LexerResult {
         addToken("keyword", text, startLine, startColumn);
       } else {
         addToken("identifier", text, startLine, startColumn);
-        // update symbol table
         const existing = symbolMap.get(text);
         if (existing) {
           existing.count += 1;
@@ -307,13 +284,14 @@ export function lex(input: string): LexerResult {
             count: 1,
             firstLine: startLine,
             firstColumn: startColumn,
+            type: "identificador",
+            value: text,
           });
         }
       }
       continue;
     }
 
-    // Multi-char operators
     const two = ch + (peek() ?? "");
     if (MULTI_OPERATORS.has(two)) {
       addToken("operator", two, startLine, startColumn);
@@ -321,29 +299,125 @@ export function lex(input: string): LexerResult {
       continue;
     }
 
-    // Single-char operators
     if (SINGLE_OPERATORS.has(ch)) {
       addToken("operator", ch, startLine, startColumn);
       advance();
       continue;
     }
 
-    // Delimiters
     if (DELIMITERS.has(ch)) {
       addToken("delimiter", ch, startLine, startColumn);
       advance();
       continue;
     }
 
-    // Unknown character
     addError(`Símbolo no reconocido: '${ch}'`, startLine, startColumn);
     advance();
   }
+
+  // Análisis semántico básico para inferir tipos y valores
+  analyzeDeclarations(tokens, symbolMap);
 
   const symbols = Array.from(symbolMap.values()).sort((a, b) =>
     a.name.localeCompare(b.name)
   );
   return { tokens, errors, symbols };
+}
+
+// Analiza los tokens para detectar declaraciones de variables y sus valores
+function analyzeDeclarations(
+  tokens: Token[],
+  symbolMap: Map<string, SymbolInfo>
+) {
+  const TYPE_KEYWORDS = new Set(["int", "float", "bool", "string"]);
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+
+    // Buscar patrón: tipo identificador = valor;
+    // Ejemplo: int x = 5;
+    if (token.type === "keyword" && TYPE_KEYWORDS.has(token.lexeme)) {
+      const varType = token.lexeme;
+
+      // El siguiente token debería ser un identificador
+      if (i + 1 < tokens.length && tokens[i + 1].type === "identifier") {
+        const varName = tokens[i + 1].lexeme;
+        const symbol = symbolMap.get(varName);
+
+        if (symbol) {
+          symbol.type = varType;
+
+          // Buscar si hay una asignación
+          if (
+            i + 2 < tokens.length &&
+            tokens[i + 2].type === "operator" &&
+            tokens[i + 2].lexeme === "="
+          ) {
+            // El siguiente token debería ser el valor
+            if (i + 3 < tokens.length) {
+              const valueToken = tokens[i + 3];
+
+              if (valueToken.type === "number") {
+                symbol.value = valueToken.lexeme;
+              } else if (valueToken.type === "string") {
+                symbol.value = valueToken.lexeme;
+              } else if (
+                valueToken.type === "keyword" &&
+                (valueToken.lexeme === "true" || valueToken.lexeme === "false")
+              ) {
+                symbol.value = valueToken.lexeme;
+              } else if (valueToken.type === "identifier") {
+                // Si se asigna otra variable, mostrar el nombre
+                symbol.value = valueToken.lexeme;
+              } else {
+                symbol.value = "sin inicializar";
+              }
+            }
+          } else {
+            symbol.value = "sin inicializar";
+          }
+        }
+
+        i++; // Saltar el identificador
+      }
+    }
+    // También detectar asignaciones posteriores: identificador = valor;
+    else if (
+      token.type === "identifier" &&
+      i + 1 < tokens.length &&
+      tokens[i + 1].type === "operator" &&
+      tokens[i + 1].lexeme === "="
+    ) {
+      const varName = token.lexeme;
+      const symbol = symbolMap.get(varName);
+
+      if (symbol && i + 2 < tokens.length) {
+        const valueToken = tokens[i + 2];
+
+        // Solo actualizar el valor si aún no tiene tipo definido o si queremos el último valor
+        if (valueToken.type === "number") {
+          symbol.value = valueToken.lexeme;
+          // Inferir tipo si no está definido
+          if (symbol.type === "identificador") {
+            symbol.type = valueToken.lexeme.includes(".") ? "float" : "int";
+          }
+        } else if (valueToken.type === "string") {
+          symbol.value = valueToken.lexeme;
+          if (symbol.type === "identificador") {
+            symbol.type = "string";
+          }
+        } else if (
+          valueToken.type === "keyword" &&
+          (valueToken.lexeme === "true" || valueToken.lexeme === "false")
+        ) {
+          symbol.value = valueToken.lexeme;
+          if (symbol.type === "identificador") {
+            symbol.type = "bool";
+          }
+        }
+      }
+    }
+  }
 }
 
 export type { LexerResult as AnalisysResult };
