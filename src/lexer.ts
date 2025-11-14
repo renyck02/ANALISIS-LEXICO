@@ -5,13 +5,13 @@
 // - Builds a basic symbol table of identifiers found
 
 export type TokenType =
-  | "keyword"
-  | "identifier"
-  | "number"
-  | "string"
-  | "operator"
-  | "delimiter"
-  | "comment";
+    | "keyword"
+    | "identifier"
+    | "number"
+    | "string"
+    | "operator"
+    | "delimiter"
+    | "comment";
 
 export interface Token {
   type: TokenType;
@@ -31,6 +31,10 @@ export interface SymbolInfo {
   count: number;
   firstLine: number;
   firstColumn: number;
+  // Campos semánticos que se completan en el análisis sintáctico:
+  type?: string;         // int, float, bool, string, etc.
+  scope?: string;        // ámbito (global, bloque X, etc.)
+  initialValue?: string; // valor inicial si se puede inferir (ej. "10", "true")
 }
 
 export interface LexerResult {
@@ -130,10 +134,10 @@ export function lex(input: string): LexerResult {
   }
 
   function addToken(
-    type: TokenType,
-    lexeme: string,
-    startLine: number,
-    startColumn: number
+      type: TokenType,
+      lexeme: string,
+      startLine: number,
+      startColumn: number
   ) {
     tokens.push({ type, lexeme, line: startLine, column: startColumn });
   }
@@ -172,10 +176,7 @@ export function lex(input: string): LexerResult {
       const next = peek();
       if (next === "/") {
         // Line comment
-        // consume till end of line
         while (currentChar() !== null && currentChar() !== "\n") advance();
-        // Optionally record comment token
-        // addToken("comment", "//", startLine, startColumn);
         continue;
       } else if (next === "*") {
         // Block comment
@@ -194,7 +195,6 @@ export function lex(input: string): LexerResult {
         }
         continue;
       }
-      // Could be /= or single '/'
       const two = ch + (next ?? "");
       if (MULTI_OPERATORS.has(two)) {
         addToken("operator", two, startLine, startColumn);
@@ -229,11 +229,7 @@ export function lex(input: string): LexerResult {
           continue;
         }
         if (escaped) {
-          // Accept common escapes
           const esc = c;
-          if (!/["\\nrt0]/.test(esc)) {
-            // unknown escape, still accept but note? We'll just include it.
-          }
           value += "\\" + esc;
           escaped = false;
           advance();
@@ -241,20 +237,18 @@ export function lex(input: string): LexerResult {
           value += c;
           advance();
         }
-        // Newlines inside strings are allowed only if escaped via \n; if raw newline seen, it's an unterminated string
         if (!escaped && c === "\n") {
           addError("Cadena sin terminar", startLine, startColumn);
           break;
         }
       }
       if (escaped || (currentChar() === null && value !== "")) {
-        // EOF before closing quote
         addError("Cadena sin terminar", startLine, startColumn);
       }
       continue;
     }
 
-    // Numbers: int or float (e.g., 123, 45.67)
+    // Numbers
     if (isDigit(ch)) {
       let text = "";
       while (isDigit(currentChar())) {
@@ -269,16 +263,13 @@ export function lex(input: string): LexerResult {
           advance();
         }
       }
-      // If letter immediately after number (e.g., 123abc), that's a lexical error in many languages
       if (isAlpha(currentChar())) {
-        // capture the junk
         let junk = "";
         while (isAlphaNumeric(currentChar())) {
           junk += currentChar();
           advance();
         }
         addError(`Número inválido: '${text + junk}'`, startLine, startColumn);
-        // still add the numeric part as a token to continue parsing downstream
         addToken("number", text, startLine, startColumn);
       } else {
         addToken("number", text, startLine, startColumn);
@@ -297,7 +288,6 @@ export function lex(input: string): LexerResult {
         addToken("keyword", text, startLine, startColumn);
       } else {
         addToken("identifier", text, startLine, startColumn);
-        // update symbol table
         const existing = symbolMap.get(text);
         if (existing) {
           existing.count += 1;
@@ -341,7 +331,7 @@ export function lex(input: string): LexerResult {
   }
 
   const symbols = Array.from(symbolMap.values()).sort((a, b) =>
-    a.name.localeCompare(b.name)
+      a.name.localeCompare(b.name)
   );
   return { tokens, errors, symbols };
 }
