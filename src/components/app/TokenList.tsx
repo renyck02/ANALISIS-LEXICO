@@ -12,6 +12,18 @@ type TokensListProps = {
     countsByType: Array<[string, number]>
 }
 
+
+const tokenTypeLabels: Record<string, string> = {
+    keyword: "Palabra reservada",
+    identifier: "Identificador",
+    number: "Número",
+    string: "Cadena",
+    operator: "Operador",
+    delimiter: "Delimitador",
+    comment: "Comentario",
+}
+
+
 export function TokensList({ analyzed, tokens, countsByType }: TokensListProps) {
     const tokenKey = (t: Token, idx: number) =>
         `${t.type}-${t.lexeme}-${t.line}-${t.column}-${idx}`
@@ -23,25 +35,27 @@ export function TokensList({ analyzed, tokens, countsByType }: TokensListProps) 
             </CardHeader>
 
             <CardContent>
-                <ScrollArea className="h-64 pr-1">
-                    {!analyzed && (
-                        <div className="">Aún no hay análisis.</div>
-                    )}
+                <ScrollArea className="h-64 w-full">
 
-                    {tokens.map((t, idx) => (
-                        <div
-                            key={tokenKey(t, idx)}
-                            className="grid grid-cols-5 items-center gap-2 rounded-md px-2 py-1 hover:bg-neutral-100"
-                        >
-              <span className="col-span-2 truncate font-mono ">
-                {t.lexeme}
-              </span>
-                            <span className="col-span-1 ">{t.type}</span>
-                            <span className="col-span-1 ">L{t.line}</span>
-                            <span className="col-span-1 ">C{t.column}</span>
-                        </div>
-                    ))}
+                    <div className="min-w-[500px] pr-1">
+                        {tokens.map((t, idx) => (
+                            <div
+                                key={tokenKey(t, idx)}
+                                className="grid grid-cols-5 items-center gap-2 rounded-md px-2 py-1 hover:bg-neutral-100"
+                            >
+        <span className="col-span-2 truncate font-mono ">
+          {t.lexeme}
+        </span>
+                                <span className="col-span-1 ">
+          {tokenTypeLabels[t.type] ?? t.type}
+        </span>
+                                <span className="col-span-1 ">L{t.line}</span>
+                                <span className="col-span-1 ">C{t.column}</span>
+                            </div>
+                        ))}
+                    </div>
                 </ScrollArea>
+
 
                 {analyzed && countsByType.length > 0 && (
                     <>
