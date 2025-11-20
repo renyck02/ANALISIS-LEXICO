@@ -33,11 +33,11 @@ if (x >= 10) {
     const syntaxErrors = parserResult?.errors ?? []
     const semanticErrors = parserResult?.semanticErrors ?? []
 
-    // enriquecimiento de la tabla de símbolos (como ya lo tenías):
+
     const enrichedSymbols: SymbolInfo[] = useMemo(() => {
         if (!lexResult) return []
 
-        // Mapa base: info léxica por nombre (apariciones, primera vez, etc.)
+
         const baseMap = new Map<string, SymbolInfo>()
         for (const s of lexResult.symbols) {
             baseMap.set(s.name, s)
@@ -45,8 +45,8 @@ if (x >= 10) {
 
         const rows: SymbolInfo[] = []
 
-        // 1) Por cada declaración sintáctica, creamos UNA FILA por (nombre, scope)
-        if (parserResult) {
+
+        if (parserResult) { // si no hubo errores lexicos
             for (const decl of parserResult.declarations) {
                 const base = baseMap.get(decl.name)
 
@@ -56,14 +56,12 @@ if (x >= 10) {
                     firstLine: base?.firstLine ?? decl.line,
                     firstColumn: base?.firstColumn ?? decl.column,
                     type: decl.type,
-                    scope: decl.scope,               // 👈 aquí va el ámbito del bloque
-                    initialValue: decl.initialValue, // 👈 valor inicial si lo hubo
+                    scope: decl.scope,
+                    initialValue: decl.initialValue,
                 })
             }
         }
 
-        // 2) Agregamos símbolos que aparecieron pero nunca fueron declarados
-        //    (por ejemplo identificadores usados sin declaración)
         const declaredNames = new Set(rows.map((r) => r.name))
         for (const s of lexResult.symbols) {
             if (!declaredNames.has(s.name)) {
@@ -99,7 +97,7 @@ if (x >= 10) {
         <div className="min-h-dvh">
             <div className="sticky top-0 z-10 backdrop-blur">
                 <div className="mx-auto w-full max-w-7xl px-4 lg:px-6 py-3 flex justify-center items-center">
-                    <Header title="Análisis Léxico, Sintáctico y Semántico Básico" />
+                    <Header title="Análisis Léxico y Sintáctico " />
                 </div>
             </div>
 

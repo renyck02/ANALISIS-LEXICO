@@ -68,6 +68,10 @@ const isLiteral = (t: Token | undefined) =>
  * Expr      -> Primary (operator Primary)*
  * Primary   -> identifier | literal | '(' Expr ')'
  */
+
+
+
+
 export function parse(tokens: Token[]): ParserResult {
     let current = 0
     let lastToken: Token | null = null
@@ -79,7 +83,7 @@ export function parse(tokens: Token[]): ParserResult {
     const scopeStack: string[] = ["global"]
     const currentScope = () => scopeStack[scopeStack.length - 1]
 
-    const isAtEnd = () => current >= tokens.length
+    const isAtEnd = () => current >= tokens.length // para saber si se leyo todo los tokens
     const peek = () => (isAtEnd() ? undefined : tokens[current])
 
     const advance = () => {
@@ -195,7 +199,7 @@ export function parse(tokens: Token[]): ParserResult {
             "Se esperaba un identificador después del tipo"
         )
 
-        // Asignación opcional
+        // asignacion opcion en caso de errores
         let initialValue: string | undefined
         const afterIdent = peek()
         if (isOperator(afterIdent, "=")) {
@@ -213,7 +217,7 @@ export function parse(tokens: Token[]): ParserResult {
         // ';'
         consumeDelimiter(";", "Se esperaba ';' al final de la declaración de variable")
 
-        // Registrar declaracion y checar redeclaracion en el MISMO ambito
+        // Registrar declaracion y checar redeclaracion en el mismo scope
         if (identToken) {
             const scope = currentScope()
             const previous = declarations.find(

@@ -1,8 +1,3 @@
-// Simple lexical analyzer for a small C-like language
-// - Recognizes: keywords, identifiers, numbers, strings, operators, delimiters, comments
-// - Tracks line/column positions
-// - Reports lexical errors
-// - Builds a basic symbol table of identifiers found
 
 export type TokenType =
     | "keyword"
@@ -31,10 +26,9 @@ export interface SymbolInfo {
   count: number;
   firstLine: number;
   firstColumn: number;
-  // Campos semánticos que se completan en el análisis sintáctico:
   type?: string;         // int, float, bool, string, etc.
   scope?: string;        // ámbito (global, bloque X, etc.)
-  initialValue?: string; // valor inicial si se puede inferir (ej. "10", "true")
+  initialValue?: string; // valor inicial si se puede inferir
 }
 
 export interface LexerResult {
@@ -116,7 +110,7 @@ export function lex(input: string): LexerResult {
     return i < length ? input[i] : null;
   }
 
-  function peek(offset = 1): string | null {
+  function peek(offset = 1): string | null { //va hacia delante del caracter acutal
     const idx = i + offset;
     return idx < length ? input[idx] : null;
   }
